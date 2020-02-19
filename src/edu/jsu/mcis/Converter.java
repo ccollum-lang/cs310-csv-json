@@ -1,6 +1,7 @@
 package edu.jsu.mcis;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 import com.opencsv.*;
 import org.json.simple.*;
@@ -68,10 +69,40 @@ public class Converter {
             Iterator<String[]> iterator = full.iterator();
             
             // INSERT YOUR CODE HERE
-            
+            ArrayList <String> colHeaders = new ArrayList<>();
+            ArrayList <String> rowHeaders = new ArrayList<>();
+            String[] temp;
+
+            ArrayList <ArrayList<Integer>> data = new ArrayList<>();
+            ArrayList <Integer> listData;
+
+            // assign appropriate information to colHeaders
+            temp = iterator.next();
+            for (int i = 0; i < temp.length; i++) {
+                colHeaders.add(temp[i]);
+            }
+
+            // grab the remaining data and separate it into rowHeaders and data
+            while (iterator.hasNext()) {
+                temp = iterator.next();
+                listData = new ArrayList<>();
+                for (int i = 1; i < temp.length; i++) {
+                    listData.add(Integer.parseInt(temp[i]));
+                }
+                rowHeaders.add(temp[0]);
+                data.add(listData);
+            }
+
+            // format colHeaders, rowHeaders, and data into JSON format
+            JSONObject convert = new JSONObject();
+            convert.put("colHeaders",colHeaders);
+            convert.put("rowHeaders",rowHeaders);
+            convert.put("data",data);
+
+            results = convert.toJSONString();
         }        
         catch(Exception e) { return e.toString(); }
-        
+
         return results.trim();
         
     }
@@ -86,13 +117,46 @@ public class Converter {
             CSVWriter csvWriter = new CSVWriter(writer, ',', '"', '\n');
             
             // INSERT YOUR CODE HERE
-            
+            String[] col;
+            String[] row;
+
+            ArrayList <String> colHeaders = new ArrayList<>();
+            ArrayList <String> rowHeader = new ArrayList<>();
+            ArrayList <ArrayList<Long>> dataArray = new ArrayList<>();
+
+            JSONParser parser = new JSONParser();
+            JSONObject jsonObject = (JSONObject)parser.parse(jsonString);
+
+            // parse out information from JSON to CSV format for col
+            colHeaders = (ArrayList<String>) jsonObject.get("colHeaders");
+            col = new String[colHeaders.size()];
+            for (int i = 0; i < colHeaders.size(); i++) {
+                col[i] = colHeaders.get(i);
+            }
+            csvWriter.writeNext(col);
+
+            // parse information from JSON to CSV and separate data from the ArrayList
+            rowHeader = (ArrayList<String>) jsonObject.get("rowHeaders");
+            dataArray = (ArrayList<ArrayList<Long>>) jsonObject.get("data");
+            row = new String[colHeaders.size()];
+            for (int i = 0; i < rowHeader.size(); i++) {
+                row[0] = rowHeader.get(i);
+                for (int k = 0; k < dataArray.get(i).size(); k++) {
+                    row[k+1] = dataArray.get(i).get(k).toString();
+                }
+                csvWriter.writeNext(row);
+            }
+
+            results = writer.toString();
         }
         
-        catch(Exception e) { return e.toString(); }
+        catch(Exception e) {
+             e.toString();
+            e.printStackTrace();
+        }
         
         return results.trim();
-        
+
     }
 
 }
